@@ -406,7 +406,7 @@
         <div class="header">
             <button class="theme-toggle" id="themeToggle">🌙</button>
             <h1>地理知识点文档下载中心</h1>
-            <p>geo文件夹文档列表，支持预览+下载</p>
+            <p>当前目录文档列表，支持预览+下载</p>
         </div>
         <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -470,8 +470,9 @@
             const previewModal = document.getElementById('previewModal');
             const closeModal = document.getElementById('closeModal');
             const previewContent = document.getElementById('previewContent');
-            const folderPath = './geo/';
-            // 优化：兼容新旧格式（doc/docx、xls/xlsx、ppt/pptx全包含）
+            // 关键修改：文件夹路径改为当前目录（去掉geo/）
+            const folderPath = './';
+            // 兼容新旧格式（doc/docx、xls/xlsx、ppt/pptx全包含）
             const validFileTypes = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'ppt', 'pptx', 'txt'];
             let allDocs = [];
             let currentTheme = 'light';
@@ -601,7 +602,7 @@
             const loadDocs = async () => {
                 try {
                     const response = await fetch(folderPath);
-                    if (!response.ok) throw new Error('文件夹访问失败，请检查路径或服务器环境');
+                    if (!response.ok) throw new Error('文件夹访问失败，请检查服务器环境');
 
                     const html = await response.text();
                     const parser = new DOMParser();
@@ -612,7 +613,9 @@
                         .map(link => {
                             const fileName = link.textContent.trim();
                             const fileHref = link.getAttribute('href').trim();
-                            const isFile = !fileName.endsWith('/') && fileName !== '..';
+                            // 过滤：排除当前html文件（避免显示自身）、上级目录、文件夹
+                            const isSelfFile = fileHref.toLowerCase() === 'index.html';
+                            const isFile = !fileName.endsWith('/') && fileName !== '..' && !isSelfFile;
                             const fileExt = fileName.split('.').pop()?.toLowerCase();
                             const isDocType = validFileTypes.includes(fileExt);
                             
